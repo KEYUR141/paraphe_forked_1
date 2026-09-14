@@ -326,6 +326,18 @@ class TestSetup(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("Paraphe", out.getvalue())
 
+    def test_console_command_prints_installed_version_without_configuration(self) -> None:
+        out = io.StringIO()
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch.object(_entry, "version", return_value="1.2.3") as distribution_version,
+            contextlib.redirect_stdout(out),
+        ):
+            code = _entry.main(["--version"])
+        self.assertEqual(code, 0)
+        self.assertEqual(out.getvalue(), "1.2.3\n")
+        distribution_version.assert_called_once_with("paraphe")
+
     def test_console_command_fails_closed_on_incomplete_configuration(self) -> None:
         err = io.StringIO()
         with mock.patch.dict(os.environ, {"PARAPHE_OWNER_TELEGRAM_ID": "999001"}, clear=True), contextlib.redirect_stderr(err):
