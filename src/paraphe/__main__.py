@@ -16,6 +16,7 @@ Paraphe - the self-hosted owner decision inbox an agent asks and you answer.
   paraphe ask QUESTION ...  create a card from the shell; prints the request id
   paraphe wait REQUEST_ID   block until the card is answered; prints the answer
   paraphe --version         show the installed version
+  paraphe check telegram    verify the configured phone destination
   paraphe --help            show this message
 
 `paraphe ask` and `paraphe wait` complete the whole ask/answer loop from a
@@ -52,6 +53,10 @@ def main(argv: list[str] | None = None) -> int:
     if args[:1] == ["--version"]:
         print(version("paraphe"))
         return 0
+    if args and args[0] == "check":
+        from .check import main as check_main
+
+        return check_main(args[1:])
     if args and args[0] in {"ask", "wait"}:
         from .cli import main as cli_main
 
