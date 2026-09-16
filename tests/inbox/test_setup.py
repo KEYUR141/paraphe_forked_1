@@ -89,7 +89,9 @@ class TestSetup(unittest.TestCase):
         return path
 
     def _start(self, config_path: Path, environ: dict[str, str] | None = None):
-        return Inbox.start(config_path=config_path, environ=environ or {})
+        inbox = Inbox.start(config_path=config_path, environ=environ or {})
+        self.addCleanup(inbox.close)
+        return inbox
 
     def test_console_mode_starts_without_a_phone_destination(self) -> None:
         path = self._write_config(
@@ -385,6 +387,7 @@ class TestAnswerPath(unittest.TestCase):
             mcp_create_bearer=CREATE,
             owner_answer_token=ANSWER,
         )
+        self.addCleanup(self.inbox.close)
         self.handle = self.inbox.serve(host="127.0.0.1", port=0)
         self.addCleanup(self.handle.close)
         self.base = f"http://127.0.0.1:{self.handle.port}"
