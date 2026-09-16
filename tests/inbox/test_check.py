@@ -80,6 +80,20 @@ class TestTelegramCheck(unittest.TestCase):
         self.assertNotIn(self.token, output)
         self.assertNotIn(self.token_url, output)
 
+    def test_a_token_transport_failure_does_not_claim_telegram_refused_it(self) -> None:
+        class UnreachableToken(FakeTelegramAPI):
+            def get_me(self) -> dict[str, object]:
+                raise self_module.TelegramAPIError(self_url)
+
+        self_module = self.module
+        self_url = self.token_url
+        code, output = self._run(UnreachableToken(self.token))
+        self.assertEqual(code, 2)
+        self.assertIn("could not reach the Telegram Bot API", output)
+        self.assertNotIn("refused", output)
+        self.assertNotIn(self.token, output)
+        self.assertNotIn(self.token_url, output)
+
     def test_refused_delivery_names_the_owner_and_next_steps_without_leaking(self) -> None:
         class RefusedDelivery(FakeTelegramAPI):
             def send_message(
@@ -94,6 +108,23 @@ class TestTelegramCheck(unittest.TestCase):
         self.assertIn("owner 999001", output)
         self.assertIn("check the id", output)
         self.assertIn("open a private chat", output)
+        self.assertNotIn(self.token, output)
+        self.assertNotIn(self.token_url, output)
+
+    def test_a_delivery_transport_failure_does_not_blame_the_owner_id(self) -> None:
+        class UnreachableDelivery(FakeTelegramAPI):
+            def send_message(
+                self, chat_id: int, text: str, reply_markup: object
+            ) -> dict[str, object]:
+                raise self_module.TelegramAPIError(self_url)
+
+        self_module = self.module
+        self_url = self.token_url
+        code, output = self._run(UnreachableDelivery(self.token))
+        self.assertEqual(code, 2)
+        self.assertIn("could not reach the Telegram Bot API", output)
+        self.assertNotIn("check the id", output)
+        self.assertNotIn("open a private chat", output)
         self.assertNotIn(self.token, output)
         self.assertNotIn(self.token_url, output)
 

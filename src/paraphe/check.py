@@ -12,6 +12,8 @@ from .inbox.config import SetupError, load_settings
 from .inbox.runtime import TelegramAPIError, TelegramBotAPI
 
 CHECK_MESSAGE = "Paraphe Telegram check passed. This is a setup test, not a decision card."
+NO_PHONE_DESTINATION = "paraphe: no phone destination is configured"
+TELEGRAM_UNREACHABLE = "paraphe: could not reach the Telegram Bot API"
 
 
 def telegram(
@@ -28,7 +30,7 @@ def telegram(
         environ.get(name, "").strip()
         for name in ("PARAPHE_BOT_TOKEN", "PARAPHE_OWNER_TELEGRAM_ID")
     ):
-        print("paraphe: no phone destination is configured", file=err)
+        print(NO_PHONE_DESTINATION, file=err)
         return 2
     try:
         settings = load_settings(config_path=config_path, environ=environ)
@@ -36,26 +38,32 @@ def telegram(
         print(f"paraphe: {exc}", file=err)
         return 2
     if not settings.bot_token or settings.owner_telegram_id is None:
-        print("paraphe: no phone destination is configured", file=err)
+        print(NO_PHONE_DESTINATION, file=err)
         return 2
 
     api = TelegramBotAPI(settings.bot_token)
     try:
         identity = api.get_me()
-    except (NotifyRejected, TelegramAPIError):
+    except NotifyRejected:
         print("paraphe: Telegram refused the configured bot token", file=err)
+        return 2
+    except TelegramAPIError:
+        print(TELEGRAM_UNREACHABLE, file=err)
         return 2
     username = identity.get("username")
     bot = f"@{username}" if isinstance(username, str) and username else "the configured bot"
     print(f"Telegram token identifies {bot}.", file=out)
     try:
         api.send_message(settings.owner_telegram_id, CHECK_MESSAGE, None)
-    except (NotifyRejected, TelegramAPIError):
+    except NotifyRejected:
         print(
             f"paraphe: Telegram could not deliver to owner {settings.owner_telegram_id}; "
             "check the id and open a private chat with the bot first",
             file=err,
         )
+        return 2
+    except TelegramAPIError:
+        print(TELEGRAM_UNREACHABLE, file=err)
         return 2
     print(f"Telegram check passed for owner {settings.owner_telegram_id}.", file=out)
     return 0
