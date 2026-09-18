@@ -158,9 +158,13 @@ paraphe store relocate
 ```
 
 The command refuses to overwrite a store at the target, verifies the SQLite
-copy before installing it, and leaves the old store in place as a backup. After
-the copied store has been checked, use `paraphe store relocate --move` instead
-when the old store should be removed after a successful relocation.
+copy before installing it, and leaves the old store in place as a backup. To
+remove the old store instead of keeping it as a backup, run the same command
+with `--move`:
+
+```console
+paraphe store relocate --move
+```
 
 Paraphe refuses normal startup with the new default while a store exists only
 at `/var/lib/paraphe/inbox.sqlite`; this prevents an upgrade from quietly

@@ -154,6 +154,8 @@ def relocate_store(
 
     return target_path
 
+
+
 class Store:
     def __init__(self, path: Path | str | None = None) -> None:
         self.path = Path(path) if path else default_store_path()
